@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Calendar, Image, Trash2, Eye, CheckSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
 
 interface HistoryItem {
   id: number;
@@ -19,21 +18,50 @@ interface HistoryItem {
   }[];
 }
 
-export const FileHistory = ({ onPreview }: { onPreview: (file: any) => void }) => {
+interface FileHistoryProps {
+  onPreview: (file: any) => void;
+  onProcessSelected: (files: any[]) => void;
+}
+
+export const FileHistory = ({ onPreview, onProcessSelected }: FileHistoryProps) => {
   const [history, setHistory] = useState<HistoryItem[]>([
     {
       id: 1,
       date: new Date(),
       files: [
-        { name: 'image1.jpg', thumbnail: '/placeholder.svg' },
-        { name: 'image2.jpg', thumbnail: '/placeholder.svg' },
+        { 
+          name: 'image1.jpg', 
+          thumbnail: '/placeholder.svg',
+          extractedData: {
+            dimensions: '1920x1080',
+            size: '2.5MB',
+            format: 'JPEG'
+          }
+        },
+        { 
+          name: 'image2.jpg', 
+          thumbnail: '/placeholder.svg',
+          extractedData: {
+            dimensions: '800x600',
+            size: '1.2MB',
+            format: 'JPEG'
+          }
+        },
       ],
     },
     {
       id: 2,
       date: new Date(Date.now() - 86400000),
       files: [
-        { name: 'image3.jpg', thumbnail: '/placeholder.svg' },
+        { 
+          name: 'image3.jpg', 
+          thumbnail: '/placeholder.svg',
+          extractedData: {
+            dimensions: '1280x720',
+            size: '1.8MB',
+            format: 'PNG'
+          }
+        },
       ],
     },
   ]);
@@ -69,31 +97,35 @@ export const FileHistory = ({ onPreview }: { onPreview: (file: any) => void }) =
     }));
   };
 
+  const getSelectedFiles = () => {
+    return history.flatMap(batch => 
+      batch.files.filter(file => file.selected)
+    );
+  };
+
+  React.useEffect(() => {
+    const selectedFiles = getSelectedFiles();
+    onProcessSelected(selectedFiles);
+  }, [history]);
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Checkbox 
-            checked={selectAll}
-            onCheckedChange={toggleSelectAll}
-            id="select-all"
-          />
-          <label htmlFor="select-all" className="text-sm">Select All</label>
-        </div>
-        <Button variant="outline" size="sm">
-          Process Selected
-        </Button>
+      <div className="flex items-center gap-2">
+        <Checkbox 
+          checked={selectAll}
+          onCheckedChange={toggleSelectAll}
+          id="select-all"
+        />
+        <label htmlFor="select-all" className="text-sm">Select All</label>
       </div>
 
       <ScrollArea className="h-[calc(100vh-12rem)] pr-4">
         <div className="space-y-6">
           {history.map((batch) => (
             <div key={batch.id} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>{batch.date.toLocaleDateString()}</span>
-                </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>{batch.date.toLocaleDateString()}</span>
                 <Checkbox />
               </div>
               
@@ -114,20 +146,18 @@ export const FileHistory = ({ onPreview }: { onPreview: (file: any) => void }) =
                       {file.name}
                     </span>
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      <button
+                        className="p-2 hover:bg-accent rounded-full"
                         onClick={() => onPreview(file)}
                       >
                         <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      </button>
+                      <button
+                        className="p-2 hover:bg-accent rounded-full"
                         onClick={() => handleDelete(batch.id, index)}
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ))}
