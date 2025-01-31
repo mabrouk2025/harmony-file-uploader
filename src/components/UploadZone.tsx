@@ -1,11 +1,13 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, File } from 'lucide-react';
+import { Upload, File, Loader } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 interface FileWithProgress extends File {
   progress?: number;
+  parsingProgress?: number;
+  status: 'uploading' | 'parsing' | 'complete' | 'error';
 }
 
 export const UploadZone = () => {
@@ -13,18 +15,25 @@ export const UploadZone = () => {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map(file => Object.assign(file, {
-      progress: 0
+      progress: 0,
+      parsingProgress: 0,
+      status: 'uploading' as const
     }));
     
     setFiles(prev => [...prev, ...newFiles]);
 
     // Simulate upload progress
     newFiles.forEach(file => {
-      const interval = setInterval(() => {
+      const uploadInterval = setInterval(() => {
         setFiles(prev => prev.map(f => {
           if (f === file) {
             const progress = (f.progress || 0) + 10;
-            if (progress >= 100) clearInterval(interval);
+            if (progress >= 100) {
+              clearInterval(uploadInterval);
+              // Start parsing after upload complete
+              f.status = 'parsing';
+              simulateParsing(file);
+            }
             return { ...f, progress };
           }
           return f;
@@ -32,6 +41,22 @@ export const UploadZone = () => {
       }, 200);
     });
   }, []);
+
+  const simulateParsing = (file: FileWithProgress) => {
+    const parsingInterval = setInterval(() => {
+      setFiles(prev => prev.map(f => {
+        if (f === file) {
+          const parsingProgress = (f.parsingProgress || 0) + 20;
+          if (parsingProgress >= 100) {
+            clearInterval(parsingInterval);
+            return { ...f, parsingProgress, status: 'complete' as const };
+          }
+          return { ...f, parsingProgress };
+        }
+        return f;
+      }));
+    }, 300);
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
@@ -68,8 +93,22 @@ export const UploadZone = () => {
                     {(file.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
+                {file.status === 'parsing' && (
+                  <Loader className="w-4 h-4 animate-spin" />
+                )}
               </div>
-              <Progress value={file.progress} className="mt-2" />
+              {file.status === 'uploading' && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Uploading...</p>
+                  <Progress value={file.progress} className="progress-animation" />
+                </div>
+              )}
+              {file.status === 'parsing' && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Parsing...</p>
+                  <Progress value={file.parsingProgress} className="progress-animation" />
+                </div>
+              )}
             </div>
           ))}
         </div>
