@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Image, Trash2, Eye } from 'lucide-react';
+import { Calendar, Image, Trash2, Eye, CheckSquare } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -71,24 +71,29 @@ export const FileHistory = ({ onPreview }: { onPreview: (file: any) => void }) =
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Checkbox 
-          checked={selectAll}
-          onCheckedChange={toggleSelectAll}
-          id="select-all"
-        />
-        <label htmlFor="select-all" className="text-sm">Select All</label>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Checkbox 
+            checked={selectAll}
+            onCheckedChange={toggleSelectAll}
+            id="select-all"
+          />
+          <label htmlFor="select-all" className="text-sm">Select All</label>
+        </div>
+        <Button variant="outline" size="sm">
+          Process Selected
+        </Button>
       </div>
 
       <ScrollArea className="h-[calc(100vh-12rem)] pr-4">
         <div className="space-y-6">
           {history.map((batch) => (
             <div key={batch.id} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                <span className="text-sm text-muted-foreground">
-                  {batch.date.toLocaleDateString()}
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  <span>{batch.date.toLocaleDateString()}</span>
+                </div>
                 <Checkbox />
               </div>
               
